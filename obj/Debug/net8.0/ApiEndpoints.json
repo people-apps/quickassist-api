@@ -1,0 +1,34 @@
+[
+  {
+    "ContainingType": "quickassist.Controllers.DataReportController",
+    "Method": "GetEmergencyAndProfileData",
+    "RelativePath": "api/DataReport/{emergencyId}/json",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "emergencyId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "quickassist.Controllers.DataReportController",
+    "Method": "GetEmergencyAndProfilePDF",
+    "RelativePath": "api/DataReport/{emergencyId}/pdf",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "emergencyId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

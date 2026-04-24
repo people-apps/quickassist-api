@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "quickassist",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/DataReport/{emergencyId}/pdf": {
+      "get": {
+        "tags": [
+          "DataReport"
+        ],
+        "parameters": [
+          {
+            "name": "emergencyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/DataReport/{emergencyId}/json": {
+      "get": {
+        "tags": [
+          "DataReport"
+        ],
+        "parameters": [
+          {
+            "name": "emergencyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": { }
+}
