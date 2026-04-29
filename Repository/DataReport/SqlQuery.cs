@@ -2,6 +2,41 @@
 {
     public class SqlQuery
     {
+        public static string DrugsQuery = @"
+            SELECT
+                drug_id,
+                emergency_id,
+                COALESCE(description, '') AS description,
+                COALESCE(dose, '') AS dose,
+                COALESCE(via, '') AS via,
+                COALESCE(results, '') AS results,
+                COALESCE(medication_time, '') AS medication_time,
+                date_created,
+                created_by
+            FROM public.adm_drugs
+            WHERE emergency_id = {0};
+            ";
+
+        public static string EmergencySignsQuery = @"
+            SELECT 
+                emergency_signs_id,
+                emergency_id,
+                COALESCE(hour, '') AS hour,
+                COALESCE(p_a, '') AS p_a,
+                COALESCE(f_r, '') AS f_r,
+                COALESCE(f_c, '') AS f_c,
+                COALESCE(t_2, '') AS t_2,
+                COALESCE(glycemia, '') AS glycemia,
+                COALESCE(oximetry, '') AS oximetry,
+                COALESCE(rhythm_def, '') AS rhythm_def,
+                COALESCE(results, '') AS results,
+                date_created,
+                created_by
+            FROM public.adm_emergency_signs
+            WHERE emergency_id = {0}
+            ";
+
+
         public static string EmergencyAndProfileQuery = @"
             SELECT 
                 e.emergency_id,
@@ -109,11 +144,172 @@
                 p.document,
                 COALESCE(p.name, '') AS name,
                 COALESCE(p.surname, '') AS surname,
-                p.status AS profile_status
+                p.status AS profile_status,
+
+                es.emergency_signs_id,
+                COALESCE(es.hour, '') AS hour,
+                COALESCE(es.p_a, '') AS p_a,
+                COALESCE(es.f_r, '') AS f_r,
+                COALESCE(es.f_c, '') AS f_c,
+                COALESCE(es.t_2, '') AS t_2,
+                COALESCE(es.glycemia, '') AS glycemia,
+                COALESCE(es.oximetry, '') AS oximetry,
+                COALESCE(es.rhythm_def, '') AS rhythm_def,
+                COALESCE(es.results, '') AS results_drugs,
+                es.date_created,
+                es.created_by,
+
+                d.drug_id,
+                COALESCE(d.description, '') AS description,
+                COALESCE(d.dose, '') AS dose,
+                COALESCE(d.via, '') AS via,
+                COALESCE(d.results, '') AS results,
+                COALESCE(d.medication_time, '') AS medication_time
 
             FROM public.adm_emergency e
             INNER JOIN public.adm_profile p ON e.profile_id = p.profile_id
+            LEFT JOIN public.adm_emergency_signs es ON e.emergency_id = es.emergency_id
+            LEFT JOIN public.adm_drugs d ON e.emergency_id = d.emergency_id
             WHERE e.emergency_id = {0}
+        ";
+
+
+        public static string EmergencyByEventIdQuery = @"
+            SELECT 
+                e.emergency_id,
+                e.emergency_uuid,
+                e.profile_id,
+                e.blood_type,
+                COALESCE(e.address, '') AS address,
+                COALESCE(e.responsible_name, '') AS responsible_name,
+                COALESCE(e.responsible_phone, '') AS responsible_phone,
+                e.event_id,
+                COALESCE(e.time_at_scene, '00:00') AS time_at_scene,
+                COALESCE(e.time_out_scene, '00:00') AS time_out_scene,
+                e.is_translated,
+                COALESCE(e.hospital_translated, '') AS hospital_translated,
+                COALESCE(e.time_at_hospital, '00:00') AS time_at_hospital,
+                COALESCE(e.time_out_hospital, '00:00') AS time_out_hospital,
+                COALESCE(e.pilots, '') AS pilots,
+                COALESCE(e.main_medicals, '') AS main_medicals,
+                e.is_conscious,
+                e.is_unconscious,
+                e.is_disoriented,
+                e.is_seizing,
+                e.is_skin_dry,
+                e.is_skin_diaphoretic,
+                e.is_skin_color_not_applied,
+                e.is_skin_color_rash,
+                e.is_skin_color_cyanotic,
+                e.is_skin_color_pale,
+                e.temperature_not_applied,
+                e.temperature_cold,
+                e.temperature_hot,
+                e.history_asthma,
+                e.history_bronchitis,
+                e.history_overweight,
+                e.history_diabetes,
+                e.history_cardiac,
+                e.history_hta,
+                e.history_others,
+                e.long_right_clear,
+                e.long_right_absent,
+                e.long_right_crackling,
+                e.long_right_ronchi,
+                e.long_right_wheezing,
+                e.long_left_clear,
+                e.long_left_absent,
+                e.long_left_crackling,
+                e.long_left_ronchi,
+                e.long_left_wheezing,
+                e.pupils_right_pupiliform,
+                e.pupils_right_medium,
+                e.pupils_right_dilated,
+                e.pupils_right_react_light,
+                e.pupils_right_not_responing,
+                e.pupils_right_not_anisocoria,
+                e.pupils_left_pupiliform,
+                e.pupils_left_medium,
+                e.pupils_left_dilated,
+                e.pupils_left_react_light,
+                e.pupils_left_not_responing,
+                e.pupils_left_not_anisocoria,
+                e.eyes_uneven,
+                e.eyes_constricted,
+                e.eyes_dilated,
+                e.eyes_normal,
+                e.patient_contractures,
+                e.patient_bleeding,
+                e.patient_amputated,
+                e.patient_oxygen,
+                e.patient_paralysis,
+                e.patient_vomiting,
+                e.treatment_rccp,
+                e.treatment_monitor,
+                e.treatment_defibrillator,
+                e.treatment_cannulation,
+                e.treatment_dressings,
+                e.treatment_ext_fixation,
+                e.treatment_irrigation,
+                e.treatment_spinal_inmobi,
+                e.treatment_child_birth,
+                e.treatment_breath_oxygen,
+                e.treatment_breath_aspiration,
+                e.treatment_breath_intubation,
+                e.treatment_breath_anbu,
+                e.treatment_breath_failed,
+                e.treatment_breath_ventilator,
+                e.glascow_eyes_scala,
+                e.glascow_motor_scala,
+                e.glascow_verbal_scala,
+                COALESCE(e.clinical_history, '') AS clinical_history,
+                COALESCE(e.signs_and_symptopms, '') AS signs_and_symptopms,
+                COALESCE(e.allergies, '') AS allergies,
+                COALESCE(e.physical_exam, '') AS physical_exam,
+                COALESCE(e.treatment, '') AS treatment,
+                COALESCE(e.url_sign, '') AS url_sign,
+                e.created_by,
+                e.date_created,
+                e.date_modified,
+                e.event_location,
+                e.emergency_status,
+
+                p.profile_uuid,
+                p.birthday,
+                COALESCE(p.country, '') AS country,
+                p.document_type,
+                p.document,
+                COALESCE(p.name, '') AS name,
+                COALESCE(p.surname, '') AS surname,
+                p.status AS profile_status,
+
+                es.emergency_signs_id,
+                COALESCE(es.hour, '') AS hour,
+                COALESCE(es.p_a, '') AS p_a,
+                COALESCE(es.f_r, '') AS f_r,
+                COALESCE(es.f_c, '') AS f_c,
+                COALESCE(es.t_2, '') AS t_2,
+                COALESCE(es.glycemia, '') AS glycemia,
+                COALESCE(es.oximetry, '') AS oximetry,
+                COALESCE(es.rhythm_def, '') AS rhythm_def,
+                COALESCE(es.results, '') AS results_drugs,
+                es.date_created,
+                es.created_by,
+
+                d.drug_id,
+                COALESCE(d.description, '') AS description,
+                COALESCE(d.dose, '') AS dose,
+                COALESCE(d.via, '') AS via,
+                COALESCE(d.results, '') AS results,
+                COALESCE(d.medication_time, '') AS medication_time
+
+            FROM public.adm_emergency e
+            INNER JOIN public.adm_profile p ON e.profile_id = p.profile_id
+            LEFT JOIN public.adm_emergency_signs es ON e.emergency_id = es.emergency_id
+            LEFT JOIN public.adm_drugs d ON e.emergency_id = d.emergency_id
+            WHERE e.event_id = {0}
+            ORDER BY e.emergency_id
+            LIMIT {1} OFFSET {2}
         ";
     }
 }

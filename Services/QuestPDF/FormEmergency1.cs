@@ -1,7 +1,9 @@
-﻿using QuestPDF.Fluent;
+﻿using Microsoft.AspNetCore.Mvc;
+using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using quickassist.Model;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace quickassist.Services.QuestPDF
 {
@@ -27,10 +29,10 @@ namespace quickassist.Services.QuestPDF
 
                 // El Header ahora queda minimalista (solo si necesitas algo que SÍ se repita)
                 // Si no necesitas nada repetido, puedes comentar o borrar page.Header()
-                //page.Header().AlignRight().Text(x =>
-                //{
-                //    x.Span("No. 000001").FontColor("#7393B3").FontSize(8).SemiBold();
-                //});
+                page.Header().AlignRight().Text(x =>
+                {
+                    x.Span($"No. 0{Model.emergency_id}").FontColor("#7393B3").FontSize(8).SemiBold();
+                });
 
                 page.Content().Column(col =>
                 {
@@ -44,9 +46,18 @@ namespace quickassist.Services.QuestPDF
                     //col.Item().PaddingTop(10).Element(ComposeAutorizacionYFirmas);
                 });
 
-                page.Footer().AlignCenter().Text(x =>
+
+                byte[] footerData = File.ReadAllBytes("Resources\\quick-assist-footer.png");
+                page.Footer().Column(footer =>
                 {
-                    x.CurrentPageNumber();
+                    footer.Item()
+                    .Padding(5)
+                    .Text($"ID Emergencia: {Model.emergency_uuid}").FontColor("#7393B3").FontSize(7);
+                    footer.Item().Image(footerData);
+                    //.AlignCenter().Text(x =>
+                    //{
+                    //    x.CurrentPageNumber();
+                    //});
                 });
             });
         }
@@ -60,7 +71,8 @@ namespace quickassist.Services.QuestPDF
                 row.RelativeItem(1).Border(0).AlignCenter().AlignMiddle().Column(col =>
                 {
                     // Placeholder para el logo
-                    col.Item().Width(120).Height(80).Placeholder();
+                    byte[] logoData = File.ReadAllBytes("Resources\\quick-assist-logo.png");
+                    col.Item().Width(120).Height(100).Image(logoData);
                 });
 
                 // 2. Columna Central: INFORMACIÓN DEL PACIENTE
@@ -159,11 +171,11 @@ namespace quickassist.Services.QuestPDF
                         });
                     }
 
-                    DrawLineField("FECHA:  ");
+                    DrawLineField($"FECHA: {Model.date_created} ");
                     DrawLineField($"HORA DE LLAMADA: ");
                     DrawLineField($"HORA DE LLEGADA A LA ESCENA:  {Model.time_at_scene}");
                     DrawLineField($"HORA DE SALIDA DE LA ESCENA:  {Model.time_out_scene}");
-                    DrawLineField($"LUGAR/DIRECCIÓN:  ");
+                    DrawLineField($"LUGAR/DIRECCIÓN: {Model.address}");
 
                     col.Item().PaddingTop(5).Text("TRASLADO").FontSize(8).SemiBold();
                     DrawLineField($"HOSPITAL DESTINO: {Model.hospital_translated}");
@@ -230,7 +242,7 @@ namespace quickassist.Services.QuestPDF
                         });
 
 
-                        DrawYesNoCheckbox(innerCol, GetSonidosPulmonaresOptions(Model));
+                        DrawDICheckbox(innerCol, GetSonidosPulmonaresOptions(Model));
 
                         //var sonidos = new[] { "CLAROS", "AUSENTES", "CREPITANTES", "RONCUS", "SIBILANCIAS" };
                         //for (int i = 0; i < sonidos.Length; i++)
@@ -261,7 +273,7 @@ namespace quickassist.Services.QuestPDF
                         });
 
 
-                        DrawYesNoCheckbox(innerCol, GetPupilasOptions(Model));
+                        DrawDICheckbox(innerCol, GetPupilasOptions(Model));
 
                         //var pupilas = new[] { "PUNTIFORMES", "MEDIAS", "DILATADAS", "RESPONDE A LA LUZ", "NO RESPONDE", "ANISOCORIA" };
                         //foreach (var p in pupilas)
@@ -278,8 +290,18 @@ namespace quickassist.Services.QuestPDF
                     // 6. IMÁGENES/DIAGRAMA (Placeholder)
                     row.RelativeItem(1.2f).Column(innerCol =>
                     {
-                        innerCol.Item().Height(80).Placeholder(); // Espacio para el diagrama de ojos
-                        innerCol.Item().AlignCenter().Text("DIAGRAMA OCULAR").FontSize(7).Italic();
+                        innerCol.Item().AlignCenter().Text("DIAGRAMA OCULAR").FontSize(7).SemiBold();
+                        innerCol.Item().Row(r =>
+                        {
+                            r.RelativeItem().PaddingLeft(5).Text("D.").FontSize(7).Bold();
+                            r.RelativeItem().Text("I.").FontSize(7).Bold();
+                            r.RelativeItem(3);
+                        });
+
+                        DrawDICheckbox(innerCol, GetDiagramaOcular(Model));
+
+                        //innerCol.Item().Height(80).Placeholder(); // Espacio para el diagrama de ojos
+                        //innerCol.Item().AlignCenter().Text("DIAGRAMA OCULAR").FontSize(7).Italic();
                     });
 
 
@@ -287,70 +309,54 @@ namespace quickassist.Services.QuestPDF
                     col.Item().PaddingTop(5).Border(0).Row(row =>
                     {
                         // 1. MARQUE SI O NO
-                        row.RelativeItem(1).Border(0).Column(c =>
-                        {
-                            c.Item().Text("MARQUE SI O NO").FontSize(7).SemiBold();
-                            DrawYesNoHeader(c);
+                        DrawYesOrNoCheckbox(row, "MARQUE SI O NO", GetYesNoOptions(Model));
 
-                            var opciones = new[] { "CAMA", "CONTRACTURAS", "SANGRADO", "INMOBILIZADO", "SOLUCIÓN IV", "MIEMBROS (S) AMPUTADOS (S)", "LUCES / SIRENA", "OXÍGENO", "PARÁLISIS", "VOMITADO" };
-                            foreach (var opt in opciones) DrawYesNoRow(c, opt);
-                        });
+                        //row.RelativeItem(1).Border(0).Column(c =>
+                        //{
+                        //    c.Item().Text("MARQUE SI O NO").FontSize(7).SemiBold();
+                        //    DrawYesNoHeader(c);
+
+                        //    var opciones = new[] { "CAMA", "CONTRACTURAS", "SANGRADO", "INMOBILIZADO", "SOLUCIÓN IV", "MIEMBROS (S) AMPUTADOS (S)", "LUCES / SIRENA", "OXÍGENO", "PARÁLISIS", "VOMITADO" };
+                        //    foreach (var opt in opciones) DrawYesNoRow(c, opt);
+                        //});
 
                         // 2. TX ESCENA
-                        row.RelativeItem(1).PaddingLeft(5).Column(c =>
-                        {
-                            c.Item().Text("TX ESCENA").FontSize(7).SemiBold();
-                            DrawYesNoHeader(c);
+                        DrawYesOrNoCheckbox(row, "TX ESCENA", GetTxEscena(Model));
 
-                            var opciones = new[] { "R.C.C.P.", "MONITOR", "DEFIB", "CANALIZACIÓN", "VENDAJES", "FIJACIÓN EXTERNA", "IRRIGACIÓN", "INMOBILIZACIÓN COLUMNA", "PARTO", "AYUDA PSIQUIÁTRICA" };
-                            foreach (var opt in opciones) DrawYesNoRow(c, opt);
-                        });
+                        //row.RelativeItem(1).PaddingLeft(5).Column(c =>
+                        //{
+                        //    c.Item().Text("TX ESCENA").FontSize(7).SemiBold();
+                        //    DrawYesNoHeader(c);
+
+                        //    var opciones = new[] { "R.C.C.P.", "MONITOR", "DEFIB", "CANALIZACIÓN", "VENDAJES", "FIJACIÓN EXTERNA", "IRRIGACIÓN", "INMOBILIZACIÓN COLUMNA", "PARTO", "AYUDA PSIQUIÁTRICA" };
+                        //    foreach (var opt in opciones) DrawYesNoRow(c, opt);
+                        //});
 
                         // 3. TRATAMIENTO RESPIRATORIO
-                        row.RelativeItem(1).PaddingLeft(5).Border(0).Column(c =>
-                        {
-                            c.Item().Text("TRATAMIENTO RESPIRATORIO").FontSize(7).SemiBold();
-                            DrawYesNoHeader(c);
+                        DrawYesOrNoCheckbox(row, "TRATAMIENTO RESPIRATORIO", GetTratamientoRespiratorio(Model));
 
-                            var opciones = new[] { "OXÍGENO", "MASCARILLA", "CÁNULA NASAL", "ASPIRACIÓN", "CÁNULA DE GUEDEL", "AMBU", "INTUBACIÓN", "INTUBACIÓN FALLIDA", "VENTILADOR", "OXIMETRÍA" };
-                            foreach (var opt in opciones) DrawYesNoRow(c, opt);
-                        });
+                        //row.RelativeItem(1).PaddingLeft(5).Border(0).Column(c =>
+                        //{
+                        //    c.Item().Text("TRATAMIENTO RESPIRATORIO").FontSize(7).SemiBold();
+                        //    DrawYesNoHeader(c);
+
+                        //    var opciones = new[] { "OXÍGENO", "MASCARILLA", "CÁNULA NASAL", "ASPIRACIÓN", "CÁNULA DE GUEDEL", "AMBU", "INTUBACIÓN", "INTUBACIÓN FALLIDA", "VENTILADOR", "OXIMETRÍA" };
+                        //    foreach (var opt in opciones) DrawYesNoRow(c, opt);
+                        //});
 
                         // 4. HALLAZGOS NOTABLES (Placeholder para los cuerpos)
-                        row.RelativeItem(1.5f).PaddingLeft(10).Column(c =>
+                        row.RelativeItem(1.5f).Border(0).PaddingLeft(10).Column(c =>
                         {
-                            c.Item().AlignCenter().Text("HALLAZGOS NOTABLES").FontSize(7).SemiBold();
-                            c.Item().Height(100).Placeholder(); // Aquí iría la imagen anatómica
+                            //c.Item().AlignCenter().Text("HALLAZGOS NOTABLES").FontSize(7).SemiBold();
+                            byte[] hallazgosData = File.ReadAllBytes("Resources\\hallazgos-notables-img.png");
+                            c.Item().Height(130).Image(hallazgosData); 
 
                             // Lista de hallazgos en dos columnas pequeñas o una lista simple
-                            c.Item().PaddingTop(5).Text("CONTUSIÓN, DECÚBITO, DISLOCACIÓN, DOLOR, EDEMA, FRACTURA, FOLEY, HEMORRAGIA, LACERACIÓN, PARÁLISIS, QUEMADURA, TUBOS")
-                                .FontSize(6).LineHeight(1.2f);
+                            //c.Item().PaddingTop(5).Text("CONTUSIÓN, DECÚBITO, DISLOCACIÓN, DOLOR, EDEMA, FRACTURA, FOLEY, HEMORRAGIA, LACERACIÓN, PARÁLISIS, QUEMADURA, TUBOS")
+                            //    .FontSize(6).LineHeight(1.2f);
                         });
                     });
 
-                    // --- MÉTODOS AUXILIARES PARA MANTENER EL CÓDIGO LIMPIO ---
-
-                    void DrawYesNoHeader(ColumnDescriptor col)
-                    {
-                        col.Item().Row(r =>
-                        {
-                            r.RelativeItem(3); // Espacio para el texto
-                            r.RelativeItem(1).AlignCenter().Text("SI").FontSize(7).Bold();
-                            r.RelativeItem(1).AlignCenter().Text("NO").FontSize(7).Bold();
-                        });
-                    }
-
-                    void DrawYesNoRow(ColumnDescriptor col, string label)
-                    {
-                        col.Item().PaddingVertical(1).Row(r =>
-                        {
-                            r.RelativeItem(3).AlignLeft().Text(label).FontSize(7);
-                            // Cuadro SI
-                            r.RelativeItem(1).AlignCenter().Border(0.5f).Height(9).Width(9);
-                            // Cuadro NO
-                            r.RelativeItem(1).AlignCenter().Border(0.5f).Height(9).Width(9);
-                        });
-                    }
 
 
 
@@ -379,6 +385,21 @@ namespace quickassist.Services.QuestPDF
                                     columns.RelativeColumn(0.8f); // Resultado Drogas
                                 });
 
+
+                                var signosVitales = new Dictionary<string, string>
+                                {
+                                    { "SIGNOS VITALES\nHORA    P/A", $"{Model.hour}    {Model.p_a}" },
+                                    { "F/R", Model.f_r },
+                                    { "F/C", Model.f_c },
+                                    { "T°", Model.t_2 },
+                                    { "GLICEMIA", Model.glycemia },
+                                    { "OXIMETRÍA", Model.oximetry },
+                                    { "ECOMONITOR\nRITMO/DESFIB.", Model.rhythm_def },
+                                    { "RESULT.", Model.results },
+                                    { "DROGAS\nHORA | DOSIS | VIA", $"{String.Join("|", Model.drugs.Select(d => $"{d.medication_time} | {d.dose} | {d.via}"))}" },
+                                    { "DRUG_RESULT.", $"{String.Join("|", Model.drugs.Select(d => d.results))}" }
+                                };
+
                                 // Cabeceras complejas
                                 table.Header(header =>
                                 {
@@ -396,10 +417,14 @@ namespace quickassist.Services.QuestPDF
                                 });
 
                                 // Filas vacías para llenado manual (ejemplo de 4 filas)
-                                for (int i = 0; i < 4; i++)
+                                for (int i = 0; i < 1; i++)
                                 {
-                                    for (int j = 0; j < 10; j++)
-                                        table.Cell().Border(0.2f).Height(15).Text("").FontSize(6);
+                                    foreach (var value in signosVitales)
+                                    {
+                                        table.Cell().Border(0.2f).Padding(0.2f).AlignCenter().AlignMiddle().Text(value.Value).FontSize(6);
+                                    }
+                                    //for (int j = 0; j < 10; j++)
+                                    //    table.Cell().Border(0.2f).Height(15).Text("").FontSize(6);
                                 }
                             });
 
@@ -409,12 +434,19 @@ namespace quickassist.Services.QuestPDF
                             //2.BLOQUE DE TEXTO(Historia, Alergias, etc.)
                             c.Item().PaddingTop(10).BorderTop(0.2f).Padding(2).Column(textCol =>
                             {
-                                string[] campos = { "1) HISTORIA:", "2) IC:", "3) SIGNOS Y SINTOMAS:", "4) ALERGIAS:", "5) EXAMEN FÍSICO:", "6) TRATAMIENTO:" };
+                                string[] campos = { 
+                                    $"1) HISTORIA:  {Model.clinical_history}", 
+                                    $"2) IC: ", 
+                                    $"3) SIGNOS Y SINTOMAS:  {Model.signs_and_symptopms}", 
+                                    $"4) ALERGIAS:  {Model.allergies}", 
+                                    $"5) EXAMEN FÍSICO:  {Model.physical_exam}", 
+                                    $"6) TRATAMIENTO:  {Model.treatment}" 
+                                };
                                 foreach (var campo in campos)
                                 {
                                     textCol.Item().PaddingBottom(2).BorderBottom(0.2f).Row(r =>
                                     {
-                                        r.AutoItem().Text(campo).FontSize(6).SemiBold();
+                                        r.AutoItem().Text(campo).FontSize(6);
                                         r.RelativeItem().Height(13);
                                     });
                                 }
@@ -435,11 +467,11 @@ namespace quickassist.Services.QuestPDF
 
                                     inner.Item().PaddingTop(2).Text(text =>
                                     {
-                                        text.DefaultTextStyle(x => x.FontSize(7).LineHeight(1.2f));
+                                        text.DefaultTextStyle(x => x.LineHeight(0.1f).FontSize(7).LineHeight(1.2f));
                                         text.Span("Entiendo que ");
-                                        text.Span("__________________________________________").Underline();
+                                        text.Span("                                                                   ").Underline();
                                         text.Span(" se encuentra en condición crítica y será trasladado a mi solicitud al Hospital ");
-                                        text.Span("____________________________").Underline();
+                                        text.Span("                                                                   ").Underline();
                                         text.Span(" para atención de emergencia. YO, como pariente más cercano en la escena, autorizo al personal de ");
                                         text.Span("QUICKASSIST").Bold();
                                         text.Span(", a realizar los procedimientos que consideren necesarios. Estoy consciente del riesgo que conlleva el traslado del paciente");
@@ -451,7 +483,7 @@ namespace quickassist.Services.QuestPDF
                                         text.Span(" no se hace responsable por objetos olvidados dentro de la ambulancia durante la atención o el traslado.");
                                     });
 
-                                    inner.Item().AlignRight().PaddingTop(10).Column(c =>
+                                    inner.Item().AlignRight().PaddingTop(15).Column(c =>
                                     {
                                         c.Item().Width(150).BorderBottom(0.5f);
                                         c.Item().Width(150).AlignCenter().Text("Testigo").FontSize(7);
@@ -477,54 +509,85 @@ namespace quickassist.Services.QuestPDF
                             // COLUMNA DERECHA: Recuadros de Firma
                             row.RelativeItem(1).PaddingLeft(5).Column(rightCol =>
                             {
-                                //rightCol.Item().Border(0.5f).Height(65)
-                                //    .AlignBottom() // Esto empuja todo el contenido de este Item al fondo
-                                //    .Column(inner =>
-                                //    {
-                                //        inner.Item().BorderTop(0.5f).Background(Colors.Grey.Lighten4).AlignCenter().PaddingVertical(2)
-                                //            .Text("TOTAL DE GLASGOW: 00").FontSize(7).Bold();
-                                //    });
 
                                 rightCol.Item().Border(0.3f).Column(inner =>
                                 {
                                     inner.Item().Background(Colors.Grey.Lighten3).AlignCenter().Text("ESCALA DE GLASGOW").FontSize(7).Bold();
 
+
+                                    var totalGlasgow = Model.glascow_eyes_scala + Model.glascow_motor_scala + Model.glascow_verbal_scala;
+
                                     // Sección Ojos
-                                    inner.Item().PaddingHorizontal(3).AlignCenter().Text("OJOS").FontSize(6).Bold().Underline();
+                                    inner.Item().PaddingHorizontal(3).PaddingBottom(1).AlignCenter().Text("OJOS").FontSize(6).Bold().Underline();
                                     inner.Item().PaddingHorizontal(3).Row(r =>
                                     {
-                                        r.RelativeItem().AlignCenter().Text("4\n(ESPONT.)").FontSize(4).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("3\n(VERBAL)").FontSize(4).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("2\n(DOLOR)").FontSize(4).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("1\n(NINGUNO)").FontSize(4).SemiBold();
+
+                                        DrawGlasgowScale(r,new Dictionary<int, string>()
+                                        {
+                                            { 4, "ESPONT." },
+                                            { 3, "VERBAL" },
+                                            { 2, "DOLOR" },
+                                            { 1, "NINGUNO" } 
+                                        }, Model.glascow_eyes_scala);
+
+                                        //r.RelativeItem()
+                                        //    .Background(Model.glascow_eyes_scala == 4 ? Colors.Yellow.Lighten3 : Colors.Transparent)
+                                        //    .AlignCenter().Text("4\n(ESPONT.)").FontSize(4).SemiBold();
+                                        //r.RelativeItem()
+                                        //    .Background(Model.glascow_eyes_scala == 3 ? Colors.Yellow.Lighten3 : Colors.Transparent)
+                                        //    .AlignCenter().Text("3\n(VERBAL)").FontSize(4).SemiBold();
+                                        //r.RelativeItem()
+                                        //    .Background(Model.glascow_eyes_scala == 2 ? Colors.Yellow.Lighten3 : Colors.Transparent)
+                                        //    .AlignCenter().Text("2\n(DOLOR)").FontSize(4).SemiBold();
+                                        //r.RelativeItem()
+                                        //    .Background(Model.glascow_eyes_scala == 1 ? Colors.Yellow.Lighten3 : Colors.Transparent)
+                                        //    .AlignCenter().Text("1\n(NINGUNO)").FontSize(4).SemiBold();
                                     });
 
                                     inner.Item().PaddingVertical(2).LineHorizontal(0.5f);
 
                                     // Sección Motor
-                                    inner.Item().PaddingHorizontal(3).AlignCenter().Text("MOTOR").FontSize(6).Bold().Underline();
+                                    inner.Item().PaddingHorizontal(3).PaddingBottom(1).AlignCenter().Text("MOTOR").FontSize(6).Bold().Underline();
                                     inner.Item().PaddingHorizontal(3).Row(r =>
                                     {
-                                        r.RelativeItem().AlignCenter().Text("6\n(OBEDECE)").FontSize(3.3f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("5\n(LOCAL)").FontSize(3.5f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("4\n(RETIRA)").FontSize(3.5f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("3\n(FLEX)").FontSize(3.5f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("2\n(EXT)").FontSize(3.5f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("1\n(N.R)").FontSize(3.5f).SemiBold();
+
+                                        DrawGlasgowScale(r,new Dictionary<int, string>()
+                                            {
+                                                { 6, "OBEDECE" },
+                                                { 5, "LOCAL" },
+                                                { 4, "RETIRA" },
+                                                { 3, "FLEX" },
+                                                { 2, "EXT" },
+                                                { 1, "(N.R)" }
+                                            }, Model.glascow_motor_scala);
+
                                     });
 
                                     inner.Item().PaddingVertical(2).LineHorizontal(0.5f);
 
                                     // Sección Verbal
-                                    inner.Item().PaddingHorizontal(3).AlignCenter().Text("VERBAL").FontSize(6).Bold().Underline();
+                                    inner.Item().PaddingHorizontal(3).PaddingBottom(1).AlignCenter().Text("VERBAL").FontSize(6).Bold().Underline();
                                     inner.Item().PaddingHorizontal(3).Row(r =>
                                     {
-                                        r.RelativeItem().AlignCenter().Text("5\n(ORIENTADO)").FontSize(3.2f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("4\n(CONFUSO)").FontSize(3.5f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("3\n(INAPROPIADO)").FontSize(2.83f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("2\n(INCO)").FontSize(3.5f).SemiBold();
-                                        r.RelativeItem().AlignCenter().Text("1\n(N.R)").FontSize(3.5f).SemiBold();
+                                        DrawGlasgowScale(r,new Dictionary<int, string>()
+                                            {
+                                                { 5, "ORIENTADO" },
+                                                { 4, "CONFUSO" },
+                                                { 3, "INAPROPIADO" },
+                                                { 2, "INCO" },
+                                                { 1, "N.R" }
+                                            }, Model.glascow_verbal_scala);
+
                                     });
+
+                                    inner.Item().PaddingVertical(2).LineHorizontal(0.5f);
+
+                                    inner.Item()
+                                        .PaddingHorizontal(3)
+                                        .PaddingBottom(1)
+                                        .AlignCenter()
+                                        .Text($"TOTAL GLASGOW: {totalGlasgow}").FontSize(6).SemiBold();
+
                                 });
 
 
@@ -557,28 +620,17 @@ namespace quickassist.Services.QuestPDF
         }
 
 
-        private void DrawCheckboxGroup(ColumnDescriptor col, string title, string[] options)
+        private void DrawGlasgowScale(RowDescriptor row, Dictionary<int, string> options, int selectedValue)
         {
-            col.Item().Text(title).FontSize(7).SemiBold();
-            for (int i = 0; i < options.Length; i++)
+            foreach (var opt in options)
             {
-                col.Item().Row(row =>
-                {
-                    row.AutoItem().Text($"{i + 1} ").FontSize(7);
-
-                    if (i == 2)
-                        row.AutoItem().PaddingVertical(1).Border(0.5f).Height(8).Width(8).Background("#000");
-                    else
-                        row.AutoItem().PaddingVertical(1).Border(0.5f).Height(8).Width(8);
-
-                    row.RelativeItem().PaddingLeft(2).Text(options[i]).FontSize(7);
-                });
+                row.RelativeItem()
+                    .Background(selectedValue == opt.Key ? Colors.Yellow.Lighten3 : Colors.Transparent)
+                    .AlignCenter().Text($"{opt.Key}\n({opt.Value})").FontSize(4).SemiBold();
             }
         }
 
-
-
-        private void DrawYesNoCheckbox(ColumnDescriptor col, Dictionary<string, RightAndLeftDto> options)
+        private void DrawDICheckbox(ColumnDescriptor col, Dictionary<string, RightAndLeftDto> options)
         {
             foreach(var opt in options)
             {
@@ -603,6 +655,45 @@ namespace quickassist.Services.QuestPDF
             }
         }
 
+
+        // YES OR NO CHECKBOXES
+
+        private void DrawYesOrNoCheckbox(RowDescriptor row, string title, Dictionary<string, bool> options)
+        {
+            row.RelativeItem(1).Border(0).Column(c =>
+            {
+                c.Item().Text(title).FontSize(7).SemiBold();
+                DrawYesNoHeader(c);
+
+                foreach (var opt in options) DrawYesNoRow(c, opt.Key, opt.Value);
+            });
+
+        }
+
+        private void DrawYesNoHeader(ColumnDescriptor col)
+        {
+            col.Item().Row(r =>
+            {
+                r.RelativeItem(3); // Espacio para el texto
+                r.RelativeItem(1).AlignCenter().Text("SI").FontSize(7).Bold();
+                r.RelativeItem(1).AlignCenter().Text("NO").FontSize(7).Bold();
+            });
+        }
+
+        private void DrawYesNoRow(ColumnDescriptor col, string label, bool isYesChecked)
+        {
+            col.Item().PaddingVertical(1).Row(r =>
+            {
+                r.RelativeItem(3).AlignLeft().Text(label).FontSize(7);
+                // Cuadro SI
+                r.RelativeItem(1).AlignCenter().Background(isYesChecked ? "#000" : "#fff").Border(0.5f).Height(9).Width(9);
+                // Cuadro NO
+                r.RelativeItem(1).AlignCenter().Background(isYesChecked ? "#fff" : "#000").Border(0.5f).Height(9).Width(9);
+            });
+        }
+
+
+        //--------------------------------------------------------------------------------------------------------
 
         private void DrawCheckboxGroupV2(ColumnDescriptor col, string title, Dictionary<string, bool> options)
         {
@@ -693,6 +784,15 @@ namespace quickassist.Services.QuestPDF
                 };
 
 
+        public Dictionary<string, RightAndLeftDto> GetDiagramaOcular(EmergencyProfileModel model)
+            => new Dictionary<string, RightAndLeftDto>
+                {
+                    { "DESIGUAL", new RightAndLeftDto { right = model.eyes_uneven, left = model.eyes_uneven } },
+                    { "CONTRAÍDAS", new RightAndLeftDto { right = model.eyes_constricted, left = model.eyes_constricted } },
+                    { "DILATADAS", new RightAndLeftDto { right = model.eyes_dilated, left = model.eyes_dilated } },
+                    { "NORMAL", new RightAndLeftDto { right = model.eyes_normal, left = model.eyes_normal } }
+                };
+
         public Dictionary<string, RightAndLeftDto> GetPupilasOptions(EmergencyProfileModel model)
             => new Dictionary<string, RightAndLeftDto>
                 {
@@ -705,19 +805,51 @@ namespace quickassist.Services.QuestPDF
                 };
 
 
-        //private Dictionary<string, bool> GetYesNoOptions(EmergencyProfileModel model)
-        //    => new Dictionary<string, bool>
-        //        {
-        //            { "CAMA", model.yes_no_cama },
-        //            { "CONTRACTURAS", model.yes_no_contracturas },
-        //            { "SANGRADO", model.yes_no_sangrado },
-        //            { "INMOBILIZADO", model.yes_no_inmobilizado },
-        //            { "SOLUCIÓN IV", model.yes_no_solucion_iv },
-        //            { "MIEMBROS (S) AMPUTADOS (S)", model.yes_no_miembros_amputados },
-        //            { "LUCES / SIRENA", model.yes_no_luces_sirena },
-        //            { "OXÍGENO", model.yes_no_oxigeno },
-        //            { "PARÁLISIS", model.yes_no_paralisis },
-        //            { "VOMITADO", model.yes_no_vomitado }
-        //        };  
+        private Dictionary<string, bool> GetYesNoOptions(EmergencyProfileModel model)
+            => new Dictionary<string, bool>
+                {
+                    { "CAMA", false },
+                    { "CONTRACTURAS", model.patient_contractures },
+                    { "SANGRADO", model.patient_bleeding },
+                    { "INMOBILIZADO", false },
+                    { "SOLUCIÓN IV", false },
+                    { "MIEMBROS (S) AMPUTADOS (S)", model.patient_amputated },
+                    { "LUCES / SIRENA", false },
+                    { "OXÍGENO", model.patient_oxygen },
+                    { "PARÁLISIS", model.patient_paralysis },
+                    { "VOMITADO", model.patient_vomiting }
+                };
+    
+         
+        private Dictionary<string, bool> GetTxEscena(EmergencyProfileModel model)
+            => new Dictionary<string, bool>
+                {
+                    { "R.C.C.P", model.treatment_rccp },
+                    { "MONITOR", model.treatment_monitor },
+                    { "DEFIB", model.treatment_defibrillator },
+                    { "CANALIZACIÓN", model.treatment_cannulation },
+                    { "VENDAJES", model.treatment_dressings },
+                    { "FIJACIÓN EXTERNA", model.treatment_ext_fixation},
+                    { "IRRIGACIÓN", model.treatment_irrigation },
+                    { "INMOBILIZACIÓN COLUMNA", model.treatment_spinal_inmobi },
+                    { "PARTO", model.treatment_child_birth },
+                    { "AYUDA PSIQUIÁTRICA", false }
+                };
+
+
+        private Dictionary<string, bool> GetTratamientoRespiratorio(EmergencyProfileModel model)
+            => new Dictionary<string, bool>
+                {
+                    { "OXÍGENO", model.treatment_breath_oxygen },
+                    { "MASCARILLA", false },
+                    { "CÁNULA NASAL", false },
+                    { "ASPIRACIÓN", model.treatment_breath_aspiration },
+                    { "CÁNULA DE GUEDEL", false },
+                    { "AMBU", model.treatment_breath_anbu },
+                    { "INTUBACIÓN", model.treatment_breath_intubation },
+                    { "INTUBACIÓN FALLIDA", model.treatment_breath_failed },
+                    { "VENTILADOR", model.treatment_breath_ventilator },
+                    { "OXIMETRÍA", false }
+                };
     }
 }

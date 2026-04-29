@@ -27,7 +27,7 @@
       "applicationUrl": "https://localhost:7080;http://localhost:5010",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "SERVER_DB_HOST": "104.251.215.74",
+        "SERVER_DB_HOST": "localhost",
         "SERVER_DB_NAME": "db_quickassist",
         "SERVER_DB_USER": "solar",
         "SERVER_DB_PASS": "solarpass",

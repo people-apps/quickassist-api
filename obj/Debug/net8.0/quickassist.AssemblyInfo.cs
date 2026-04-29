@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("quickassist")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+616256f488085064adbaf8e774e95a6f54bc08bb")]
 [assembly: System.Reflection.AssemblyProductAttribute("quickassist")]
 [assembly: System.Reflection.AssemblyTitleAttribute("quickassist")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -3,8 +3,8 @@
     public record RightAndLeftDto
     {
         public string key { get; set; }
-        public bool right { get; set; }
-        public bool left { get; set; }
+        public bool right { get; set; } = false;
+        public bool left { get; set; } = false;
     }
 
     public record EmergencyProfileModel
@@ -138,5 +138,33 @@
         public string name { get; init; } = string.Empty;
         public string surname { get; init; } = string.Empty;
         public long profile_status { get; init; }
+
+
+        // Signos Vitales (Relacionados)
+        public int emergency_signs_id { get; init; }
+
+        // Mediciones y Signos (Strings con inicialización segura)
+        public string hour { get; init; } = string.Empty;
+        public string p_a { get; init; } = string.Empty; // Presión Arterial
+        public string f_r { get; init; } = string.Empty; // Frecuencia Respiratoria
+        public string f_c { get; init; } = string.Empty; // Frecuencia Cardíaca
+        public string t_2 { get; init; } = string.Empty; // Temperatura / O2
+        public string glycemia { get; init; } = string.Empty;
+        public string oximetry { get; init; } = string.Empty;
+        public string rhythm_def { get; init; } = string.Empty;
+        public string results { get; init; } = string.Empty;
+
+        //// Drogas
+        public IEnumerable<DrugsModel> drugs { get; set; }
+
+        //public int drug_id { get; init; }
+
+        //// Detalles del Medicamento
+        //public string description { get; init; } = string.Empty;
+        //public string dose { get; init; } = string.Empty;
+        //public string via { get; init; } = string.Empty;
+        //public string results_drugs { get; init; } = string.Empty;
+        //public string medication_time { get; init; } = string.Empty;
+
     }
 }

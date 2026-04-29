@@ -5,6 +5,45 @@
     "version": "1.0"
   },
   "paths": {
+    "/api/DataReport/event/{eventId}": {
+      "get": {
+        "tags": [
+          "DataReport"
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/DataReport/{emergencyId}/pdf": {
       "get": {
         "tags": [

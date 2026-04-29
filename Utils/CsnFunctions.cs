@@ -1,7 +1,31 @@
-﻿namespace quickassist.Utils
+﻿using System.Text.RegularExpressions;
+
+namespace quickassist.Utils
 {
     public class CsnFunctions
     {
+        /// <summary>
+        /// Funcion encargada de eliminar espacios adicionales en el nombre de un archivo.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public static string SanitizeFileName(string fileName)
+        {
+            // Elimina espacios al inicio y al final
+            fileName = fileName.Trim().ToLower();
+
+            // Reemplaza los espacios por guiones bajos
+            fileName = fileName.Replace(" ", "-");
+
+            // Elimina cualquier espacio adicional
+            fileName = Regex.Replace(fileName, @"\s+", "-");
+
+            // Eliminamos caracteres especiales
+            fileName = Regex.Replace(fileName, @"[^a-zA-Z0-9._-]", "-");
+
+            return fileName;
+        }
+
         /// <summary>
         /// Funcion encargada de validar el ambiente de ejecucion, si es produccion o desarrollo, para establecer los valores de la cadena de conexion dependiendo del entorno.
         /// </summary>

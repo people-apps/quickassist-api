@@ -78,3 +78,4 @@ C:\Users\ealva\work\quick-assist\quickassist\obj\Debug\net8.0\ref\quickassist.dl
 C:\Users\ealva\work\quick-assist\quickassist\bin\Debug\net8.0\Dapper.dll
 C:\Users\ealva\work\quick-assist\quickassist\bin\Debug\net8.0\Npgsql.dll
 C:\Users\ealva\work\quick-assist\quickassist\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
+C:\Users\ealva\work\quick-assist\quickassist\obj\Debug\net8.0\quickassist.sourcelink.json

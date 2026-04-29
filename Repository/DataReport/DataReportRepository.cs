@@ -13,6 +13,37 @@ namespace quickassist.Repository.DataReport
             _sqlConnectionFactory = sqlConnectionFactory;
         }
 
+        /// <summary>
+        /// Método encargado de recuperar la información de emergencia por evento.
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="limit"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<EmergencyProfileModel>> GetEmergencyDataByEventIdAsync(int eventId, int limit, int offset)
+        {
+            using var connection = _sqlConnectionFactory.Create();
+
+            var sql = string.Format(SqlQuery.EmergencyByEventIdQuery, eventId, limit, offset);
+
+            return await connection.QueryAsync<EmergencyProfileModel>(sql);
+        }
+
+
+        /// <summary>
+        /// Método encargado de recuperar las drogas administradas en una emergencia.
+        /// </summary>
+        /// <param name="emergencyId"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<DrugsModel>> GetDrugsDataByEmergencyIdAsync(int emergencyId)
+        {
+            using var connection = _sqlConnectionFactory.Create();
+
+            var sql = string.Format(SqlQuery.DrugsQuery, emergencyId);
+
+            return await connection.QueryAsync<DrugsModel>(sql);
+        }
+
 
         /// <summary>
         /// Método encargado de recuperar la información de emergencia y perfil de un usuario a través de una consulta SQL utilizando Dapper.
@@ -28,7 +59,6 @@ namespace quickassist.Repository.DataReport
 
             return await connection.QueryAsync<EmergencyProfileModel>(sql);
         }
-
 
     }
 }
